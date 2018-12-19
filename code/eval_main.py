@@ -5,12 +5,14 @@ import pandas as pd
 import evaluate as _eval
 
 if __name__ == "__main__":
-    data_path = "../data/data1/embedding_im_full_dat1.csv"
+    data_path = "../data/data1/embedding_im_full_new_dat1.csv"
     label_path = "../data/data1/embedding_cate_im.txt"
     nfold = 5
 
     dataset = _input.EvalDataSet(data_path, label_path, nfold)
 
+    print(dataset.n_label)
+    print(dataset.num_samples)
     for fold_idx in range(nfold):
         print("*************** Start fold " + str(fold_idx) + ". ***************")
         dataset.next_fold()
@@ -23,7 +25,7 @@ if __name__ == "__main__":
         network_dict["layer_size"] = 128
         network_dict["activation"] = tf.tanh
         network_dict["output_activation"] = None
-        network_dict["stddev"] = 0.2
+        network_dict["nn_init_stddev"] = 0.2
 
         learning_rate = 0.001
         n_epoch = 20
@@ -42,7 +44,7 @@ if __name__ == "__main__":
 
         classification_model.fit(dataset)
 
-        predictions = classsification_model.predict(dataset.testdata()["features"])
+        predictions = classification_model.predict(dataset.testdata()["features"])
         accuracy = _eval.measurement(predictions, dataset.testdata()["labels"])
         print("*************** Accuracy of Fold " + str(fold_idx) + " is: " + str(accuracy) + ". ***************")
 

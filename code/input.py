@@ -2,6 +2,14 @@ import numpy as np
 import subprocess
 import pandas as pd
 
+def cate2indices(category_labels):
+    """
+    """
+    
+    label_dat = pd.DataFrame({'category': category_labels}, dtype = 'category')
+    label_dat['cate_encoding'] =  label_dat['category'].cat.codes
+    return label_dat
+
 def BashProcessData(FLAGS, process_type):
     data_proc_sh = FLAGS["data_proc_sh"]
     file_dir = FLAGS["file_dir"]
@@ -112,38 +120,45 @@ class DataSet(object):
         return batch_dict
     
 class EvalDataSet(object):
-    def __init__(dat_path, label_path, nfold):
+    def __init__(self, data_path, label_path, n_fold):
         data_df = pd.read_csv(data_path, delimiter = "#", header = None, names = ["item_id", "data"])
         label_df = pd.read_csv(label_path, header = None, names = ["item_id", "label"])
-        data_df.join(label_df.set_index("item_id"), on = "item_id", how = 'inner')
-
+        data_df = data_df.join(label_df.set_index("item_id"), on = "item_id", how = 'inner')
         
         self.data = np.array([row.split(",") for row in data_df["data"].values], dtype = "float")
-        self.label = data_df["label"].values
+        self.label_df = cate2indices(data_df["label"].values)
+        self.label = self.label_df["cate_encoding"].values
+        self.label_df = self.label_df.drop_duplicates("category") 
         self.num_samples = self.data.shape[0]
         self.n_feature = self.data.shape[1]
         self.n_label = len(np.unique(self.label))
         
         # training and testing size
-        self.nfold = nfold
+        self.n_fold = n_fold
         self.fold_size = int(np.ceil(self.num_samples/n_fold))
         self.test_fold = -1
 
         # batch 
         self.epochs_completed = 0
-        self.index_in_epoch = 0
+        self.index_in_epoch = 0        
+
 
     def next_fold(self):        
-        self.test_fold = (self.test_fold + 1) % self.nfold
+        self.test_fold = (self.test_fold + 1) % self.n_fold
+        
+        
         if self.test_fold == 0:
             # permutate
-            perm = np.random.shuffle(np.arange(self.num_samples))
+            perm = np.arange(self.num_samples)
+            np.random.shuffle(perm)           
             self.data = self.data[perm]
             self.label = self.label[perm]
+
             
-        self.test_id_set = np.arange(self.test_fold * self_fold_size, np.min([(self.test_fold + 1) * self_fold_size, self.num_samples]))
+        self.test_id_set = np.arange(self.test_fold * self.fold_size, np.min([(self.test_fold + 1) * self.fold_size, self.num_samples]))
         self.train_id_set = np.array(list(set(np.arange(self.num_samples)) - set(self.test_id_set)))
 
+        
         self.num_train = len(self.train_id_set)
         self.num_test = len(self.test_id_set)
 
@@ -152,7 +167,7 @@ class EvalDataSet(object):
         assert batch_size <= self.num_train
         
         """Return the next `batch_size` samples from this data set."""
-        if self.index_in_epoch + batch_size > self.num_samples:
+        if self.index_in_epoch + batch_size > self.num_train:
             # Finished epoch
             self.index_in_epoch = 0
             self.epochs_completed += 1

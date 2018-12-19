@@ -2,14 +2,8 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import time as time
+import math
 
-def cate2indices(category_labels):
-    """
-    """
-    
-    label_dat = pd.DataFrame({'category': category_labels}, dtype = 'category')
-    label_dat['cate_encoding'] =  label_dat.cat.codes
-    return label_dat
 
 def measurement(predictions, labels):
     """
@@ -93,16 +87,16 @@ class Classifier(object):
             checkpoint_path: path to the optimized model parameters.
         """
 
-        assert None not in [n_feat, n_label, network_dict]:
+        assert None not in [n_feat, n_label, network_dict]
         self.n_batch = n_batch
         self.n_feat = n_feat
         self.n_label = n_label
         
-        self.n_layers = netowrk_dict["n_layers"]
-        self.layer_size = netowrk_dict["layer_size"]
-        self.activation = netowrk_dict["activation"]
-        self.output_activation = netowrk_dict["output_activation"]
-        self.nn_init_stddev = netowrk_dict["nn_init_stddev"]
+        self.n_layers = network_dict["n_layers"]
+        self.layer_size = network_dict["layer_size"]
+        self.activation = network_dict["activation"]
+        self.output_activation = network_dict["output_activation"]
+        self.nn_init_stddev = network_dict["nn_init_stddev"]
         
         self.learning_rate = learning_rate
         self.n_epoch = n_epoch
@@ -125,22 +119,21 @@ class Classifier(object):
         """
         """
         
-        logits = self. = build_mlp(input_placeholder = self.features,\
-                              output_size = self.n_label,\
-                              scope = "classification",\
-                              n_layers = self.n_layers,\
-                              size = self.layer_size,\
-                              activation = self.activation,\
-                              output_activation = self.output_activation,\
-                              stddev = self.nn_init_stddev    
-                              )
+        logits = build_mlp(input_placeholder = self.features,\
+                           output_size = self.n_label,\
+                           scope = "classification",\
+                           n_layers = self.n_layers,\
+                           size = self.layer_size,\
+                           activation = self.activation,\
+                           output_activation = self.output_activation,\
+                           stddev = self.nn_init_stddev)
         return logits
 
     def get_log_prob(self, logits, labels):
         """
         """
         
-        logprob = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = labels, logits = logits)
+        logprob = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = labels, logits = logits + tf.Variable(1e-4))
         return logprob
 
     def create_optimizer(self, loss, learning_rate):
@@ -158,19 +151,19 @@ class Classifier(object):
         ops = [self.loss, self.optimizer] if optimize else [self.loss]
         loss =  session.run(ops, {self.features: batch["features"], self.labels: batch["labels"]})
 
-        return loss
+        return loss[0]
             
 
     def build_computation_graph(self):
         """
         """
         with tf.Graph().as_default() as graph:
-            self.features, self.labels = define_placeholders()
+            self.features, self.labels = self.define_placeholders()
 
-            self.logits = policy_forward_pass(self.features)
-
-            self.logprob = get_log_prob(self.logits, self.labels)
-
+            self.logits = self.policy_forward_pass(self.features)
+            
+            self.logprob = self.get_log_prob(self.logits, self.labels)
+            
             self.loss = tf.reduce_mean(self.logprob)
 
             self.optimizer = self.create_optimizer(self.loss, self.learning_rate)
@@ -204,8 +197,11 @@ class Classifier(object):
             loss_train = 0.
 
             for step in range(n_step):
-                loss_train += self.compute_loss(self.sess, batch = dataset.next_batch(self.n_batch), optimize=True)
+                local_batch = dataset.next_batch(self.n_batch)
+                loss_train += self.compute_loss(self.sess, batch = local_batch, optimize=True)
 
+                
+                
                 if (step + 1) % num_steps_in_epoch == 0:
                     train_error = self.n_batch / dataset.num_train * loss_train
                     val_error = self.compute_loss(self.sess, batch = dataset.testdata(), optimize = False)
@@ -216,7 +212,7 @@ class Classifier(object):
 
                     print('epoch: {:2d}, step: {:5d}, training error: {:03.4f}, '
                           'validation error: {:03.4f}, time elapsed: {:4.0f} s'
-                          .format(train.epochs_completed, step, train_error, val_error, time.time() - start))
+                          .format(dataset.epochs_completed, step, train_error, val_error, time.time() - start))
         except KeyboardInterrupt:
             print('ending training')
         finally:
@@ -247,7 +243,7 @@ class Classifier(object):
         with tf.Session(graph = self.graph) as session:
             self._restore_model(session)
             logits = session.run(self.logits, {self.features: features})
-            predictions = tf.argmax(logits, axis = 1)
+            predictions = np.argmax(logits, axis = 1)
         return predictions
 
     
