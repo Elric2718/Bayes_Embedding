@@ -6,7 +6,20 @@ import pandas as pd
 
 
 if __name__ == "__main__":
+    # parameters
+    FLAGS = {}
+    FLAGS["data_proc_sh"] = "./data_proc.sh"
+    FLAGS["file_dir"] = "../data"
+    # FLAGS["input_name"] = "test.txt"
+    # FLAGS["output_name"] = "test"
+    FLAGS["input_name"] = "embedding_im.txt"
+    FLAGS["output_name"] = "embedding_im"    
 
+    input.BashProcessData(FLAGS, "0")
+
+    dataset1_path = FLAGS["file_dir"] + "/" + FLAGS["output_name"] + "_dat1.csv"
+    dataset1_path = FLAGS["file_dir"] + "/" + FLAGS["output_name"] + "_dat2.csv"
+    
     train_or_pred = "pred"
     n_batch = 1000
     n_hidden = 500
@@ -17,46 +30,22 @@ if __name__ == "__main__":
     seed = 0    
     checkpoint_path = 'checkpoints/model.ckpt'
 
-    # parameters
-    if train_or_pred == "train":
-        FLAGS = {}
-        FLAGS["data_proc_sh"] = "./data_proc.sh"
-        FLAGS["file_dir"] = "../data"
-        # FLAGS["input_name"] = "test.txt"
-        # FLAGS["output_name"] = "test"
-        FLAGS["input_name"] = "embedding_im"
-        FLAGS["output_name"] = "embedding_im"    
-
-        input.BashProcessData(FLAGS, "0")
-        path_name = FLAGS["file_dir"] + "/" + FLAGS["output_name"]
-    else:
-        FLAGS = {}
-        FLAGS["data_proc_sh"] = "./data_proc.sh"
-        FLAGS["file_dir"] = "../data"
-        # FLAGS["input_name"] = "test.txt"
-        # FLAGS["output_name"] = "test"
-        FLAGS["input_name"] = "embedding_im"
-        FLAGS["output_name"] = "embedding_im_full"
-        
-        path_name = FLAGS["file_dir"] + "/" + FLAGS["input_name"]
-
-    
-
     # read in data
     if train_or_pred == "train":
         split_ratio = 0.8
         Decare_rounds = 10
         
-        train, test = input.SplitData(path_name + "_dat1.csv", path_name + "_dat2.csv", split_ratio, Decare_rounds)
+        train, test = input.SplitData(dataset1_path, dataset2_path, split_ratio, Decare_rounds)
         n_prior = train.n_dat2
         n_obs = train.n_dat1
     else:
-        dataset1 = np.array(pd.read_csv(path_name + "_dat1.csv", header = None).values)
-        dataset2 = np.array(pd.read_csv(path_name + "_dat2.csv", header = None).values)
+        dataset1 = np.array(pd.read_csv(dataset1_path, header = None).values)
+        dataset2 = np.array(pd.read_csv(dataset2_path, header = None).values)
             
         n_prior = dataset2.shape[1]
         n_obs = dataset1.shape[1]
 
+        
 
     # build the model    
     model = be.BayesNetwork(n_batch = n_batch,\
@@ -79,9 +68,8 @@ if __name__ == "__main__":
         mu = np.array(model.encode(dataset1)[0])
         new_z, new_h = model.decode(mu, dataset2)
 
-        np.savetxt(path_name + "_new_dat1.csv", np.array(new_z), delimiter = ",")
-        np.savetxt(path_name + "_new_dat2.csv", np.array(new_h), delimiter = ",")
-        input.BashProcessData(FLAGS, "1")
+        np.savetxt(output_name + "_new_dat1.csv", np.array(new_z), delimiter = ",")
+        np.savetxt(output_name + "_new_dat2.csv", np.array(new_h), delimiter = ",")
 
 
 

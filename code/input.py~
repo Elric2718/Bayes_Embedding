@@ -2,20 +2,21 @@ import numpy as np
 import subprocess
 import pandas as pd
 
-def BashProcessData(FLAGS, process_type):
-    data_proc_sh = FLAGS["data_proc_sh"]
-    file_dir = FLAGS["file_dir"]
-    input_name = file_dir + "/" + FLAGS["input_name"]        
-    output_name = file_dir + "/" + FLAGS["output_name"]
-    subprocess.call(["chmod", "777", data_proc_sh])
-    subprocess.call([data_proc_sh, input_name, output_name, process_type])    
+def SplitData(FLAGS = None, dataset1 = None, dataset2 = None, split_ratio = 1, Decare_rounds = 10):
+    assert not all([FLAGS is None, dataset1 is None, dataset2 is None])
+    if FLAGS is not None:
+        data_proc_sh = FLAGS["data_proc_sh"]
+        file_dir = FLAGS["file_dir"]
+        input_name = file_dir + "/" + FLAGS["input_name"]        
+        output_name = file_dir + "/" + FLAGS["output_name"]
+        subprocess.call(["chmod", "777", data_proc_sh])
+        subprocess.call([data_proc_sh, input_name, output_name, '0'])
 
-def SplitData(dataset1_path = None, dataset2_path = None, split_ratio = 1, Decare_rounds = 10):
-    """
-    """
-    
-    dataset1 = np.array(pd.read_csv(dataset1_path, header = None).values)
-    dataset2 = np.array(pd.read_csv(dataset2_path, header = None).values)
+        dataset1 = pd.read_csv(output_name + "_dat1.csv", header = None).values
+        dataset2 = pd.read_csv(output_name + "_dat2.csv", header = None).values
+
+    dataset1 = np.array(dataset1)
+    dataset2 = np.array(dataset2)        
     n_sample = dataset1.shape[0]
     
     # permutation
