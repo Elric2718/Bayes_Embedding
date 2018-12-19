@@ -121,6 +121,8 @@ class EvalDataSet(object):
         self.data = np.array([row.split(",") for row in data_df["data"].values], dtype = "float")
         self.label = data_df["label"].values
         self.num_samples = self.data.shape[0]
+        self.n_feature = self.data.shape[1]
+        self.n_label = len(np.unique(self.label))
         
         # training and testing size
         self.nfold = nfold
@@ -163,7 +165,14 @@ class EvalDataSet(object):
         end = start + batch_size
         self.index_in_epoch += batch_size
 
-        return self.data[self.train_id_set[start:end]]
+        batch_dict = {"features": self.data[self.train_id_set[start:end]], "labels": self.label[self.train_id_set[start:end]]}
+        
+        return batch_dict
+
+    def testdata(self):
+        batch_dict = {"features": self.data[self.test_id_set], "labels": self.label[self.test_id_set]}
+        
+        return batch_dict
         
   
         

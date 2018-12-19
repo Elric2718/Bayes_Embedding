@@ -70,7 +70,6 @@ def build_mlp(input_placeholder,\
     
 class Classifier(object):
     def __init__(self,\
-                     nfold = 5,\
                      n_batch = 100,\
                      n_feat = None,\
                      n_label = None,\
@@ -83,7 +82,6 @@ class Classifier(object):
         Initialize the object.
         
         Args:
-            n_fold: number of folds for cross validation
             n_batch: mini-batch size.             
             n_feat: number of features
             n_label: number of labels
@@ -96,7 +94,6 @@ class Classifier(object):
         """
 
         assert None not in [n_feat, n_label, network_dict]:
-        self.nfold = nfold
         self.n_batch = n_batch
         self.n_feat = n_feat
         self.n_label = n_label
@@ -189,9 +186,7 @@ class Classifier(object):
         
     def fit(self, dataset):
         """
-        """
-        
-        assert self.optimizer is not None
+        """      
 
         self.graph = self.build_computation_graph()
         self.sess = tf.Session(graph=self.graph)
@@ -250,7 +245,7 @@ class Classifier(object):
         """
 
         with tf.Session(graph = self.graph) as session:
-            self._restore_model(session):
+            self._restore_model(session)
             logits = session.run(self.logits, {self.features: features})
             predictions = tf.argmax(logits, axis = 1)
         return predictions
