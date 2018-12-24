@@ -10,6 +10,10 @@ def cate2indices(category_labels):
     label_dat['cate_encoding'] =  label_dat['category'].cat.codes
     return label_dat
 
+def decode_csv(dat):
+    new_dat = [line.split(",") for line in dat]
+    return np.array(new_dat).astype(float)
+
 def BashProcessData(FLAGS, process_type):
     data_proc_sh = FLAGS["data_proc_sh"]
     file_dir = FLAGS["file_dir"]
@@ -18,12 +22,20 @@ def BashProcessData(FLAGS, process_type):
     subprocess.call(["chmod", "777", data_proc_sh])
     subprocess.call([data_proc_sh, input_name, output_name, process_type])    
 
-def SplitData(dataset1_path = None, dataset2_path = None, split_ratio = 1, Decare_rounds = 10):
+def SplitData(dataset1_path = None, dataset2_path = None, join_path = None, split_ratio = 1, Decare_rounds = 10):
     """
     """
+    dat1_df = pd.read_csv(dataset1_path, delimiter = "#", header = None, names = ["item_id", "data1"])
+    dat2_df = pd.read_csv(dataset2_path, delimiter = "#", header = None, names = ["item_id", "data2"])    
+    data_df = dat1_df.join(dat2_df.set_index("item_id"), on = "item_id", how = 'inner')
+
+    data_df.to_csv(join_path + "_id.txt", sep = "#", columns = ["item_id"], header = False)
+    data_df.to_csv(join_path + "_raw_dat1.csv", sep = "#", columns = ["item_id", "data1"], header = False)
+    data_df.to_csv(join_path + "_raw_dat2.csv", sep = "#", columns = ["item_id", "data2"], header = False)
     
-    dataset1 = np.array(pd.read_csv(dataset1_path, header = None).values)
-    dataset2 = np.array(pd.read_csv(dataset2_path, header = None).values)
+    dataset1 = np.array([row.split(",") for row in data_df["data1"].values], dtype = "float")
+    dataset2 = np.array([row.split(",") for row in data_df["data2"].values], dtype = "float")
+       
     n_sample = dataset1.shape[0]
     
     # permutation
@@ -122,13 +134,16 @@ class DataSet(object):
 class EvalDataSet(object):
     def __init__(self, data_path, label_path, n_fold):
         data_df = pd.read_csv(data_path, delimiter = "#", header = None, names = ["item_id", "data"])
-        label_df = pd.read_csv(label_path, header = None, names = ["item_id", "label"])
+        label_df = pd.read_csv(label_path, delimiter = "#", header = None, names = ["item_id", "label"])
         data_df = data_df.join(label_df.set_index("item_id"), on = "item_id", how = 'inner')
         
         self.data = np.array([row.split(",") for row in data_df["data"].values], dtype = "float")
         self.label_df = cate2indices(data_df["label"].values)
-        self.label = self.label_df["cate_encoding"].values
-        self.label_df = self.label_df.drop_duplicates("category") 
+        if -1 in self.label_df["cate_encoding"].values:
+            self.label_df["cate_encoding"] = self.label_df["cate_encoding"].values + 1
+        self.label = self.label_df["cate_encoding"].values            
+        self.label_df = self.label_df.drop_duplicates("category")
+
         self.num_samples = self.data.shape[0]
         self.n_feature = self.data.shape[1]
         self.n_label = len(np.unique(self.label))
@@ -145,15 +160,13 @@ class EvalDataSet(object):
 
     def next_fold(self):        
         self.test_fold = (self.test_fold + 1) % self.n_fold
-        
-        
+                
         if self.test_fold == 0:
             # permutate
             perm = np.arange(self.num_samples)
             np.random.shuffle(perm)           
             self.data = self.data[perm]
             self.label = self.label[perm]
-
             
         self.test_id_set = np.arange(self.test_fold * self.fold_size, np.min([(self.test_fold + 1) * self.fold_size, self.num_samples]))
         self.train_id_set = np.array(list(set(np.arange(self.num_samples)) - set(self.test_id_set)))

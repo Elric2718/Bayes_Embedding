@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import time as time
-import math
+import logz
+import inspect
+import types
 
 
 def measurement(predictions, labels):
@@ -61,17 +63,29 @@ def build_mlp(input_placeholder,\
                               name='output')
         return net
 
+def setup_logger(logdir, locals_):
+    # Configure output directory for logging
+    logz.configure_output_dir(logdir)
+    # Log experimental parameters
+    args = inspect.getargspec(Classifier.__init__)[0]
+    params = {k: locals_[k] if k in locals_ and not isinstance(locals_[k], types.FunctionType) and k is not "self" else None for k in args}
+    logz.save_params(params)
     
 class Classifier(object):
     def __init__(self,\
                      n_batch = 100,\
                      n_feat = None,\
                      n_label = None,\
-                     network_dict = None,\
+                     n_layers = 2,\
+                     layer_size = 128,\
+                     activation = 0.001,\
+                     output_activation = None,\
+                     nn_init_stddev = 0.02,\
                      learning_rate = 0.001,\
                      n_epoch = 100,\
                      seed = 0,\
-                     checkpoint_path = 'checkpoints/classification_model.ckpt'):
+                     checkpoint_path = 'checkpoints/classification_model.ckpt',\
+                     logdir = None):
         """
         Initialize the object.
         
@@ -87,16 +101,16 @@ class Classifier(object):
             checkpoint_path: path to the optimized model parameters.
         """
 
-        assert None not in [n_feat, n_label, network_dict]
+        assert None not in [n_feat, n_label, logdir]
         self.n_batch = n_batch
         self.n_feat = n_feat
         self.n_label = n_label
         
-        self.n_layers = network_dict["n_layers"]
-        self.layer_size = network_dict["layer_size"]
-        self.activation = network_dict["activation"]
-        self.output_activation = network_dict["output_activation"]
-        self.nn_init_stddev = network_dict["nn_init_stddev"]
+        self.n_layers = n_layers
+        self.layer_size = layer_size
+        self.activation = activation
+        self.output_activation = output_activation
+        self.nn_init_stddev = nn_init_stddev
         
         self.learning_rate = learning_rate
         self.n_epoch = n_epoch
@@ -104,7 +118,8 @@ class Classifier(object):
         self.checkpoint_path = checkpoint_path
 
         self.learning_curve = {'train': [], 'val': []}
-      
+
+        setup_logger(logdir, locals())
 
     def define_placeholders(self):
         """
@@ -195,7 +210,7 @@ class Classifier(object):
             self.learning_curve['train'].clear()
             self.learning_curve['val'].clear()
             loss_train = 0.
-
+            
             for step in range(n_step):
                 local_batch = dataset.next_batch(self.n_batch)
                 loss_train += self.compute_loss(self.sess, batch = local_batch, optimize=True)
@@ -210,9 +225,16 @@ class Classifier(object):
                     self.learning_curve['val'] += [val_error]
                     loss_train = 0.
 
-                    print('epoch: {:2d}, step: {:5d}, training error: {:03.4f}, '
-                          'validation error: {:03.4f}, time elapsed: {:4.0f} s'
-                          .format(dataset.epochs_completed, step, train_error, val_error, time.time() - start))
+                    logz.log_tabular("Time", time.time() - start)
+                    logz.log_tabular("Fold", dataset.test_fold)
+                    logz.log_tabular("Epoch", dataset.epochs_completed)
+                    logz.log_tabular("BatchStep", step)
+                    logz.log_tabular("TrainError", train_error)
+                    logz.log_tabular("ValError", val_error)
+                    logz.dump_tabular()
+                    # print('epoch: {:2d}, step: {:5d}, training error: {:03.4f}, '
+                    #       'validation error: {:03.4f}, time elapsed: {:4.0f} s'
+                    #       .format(dataset.epochs_completed, step, train_error, val_error, time.time() - start))
         except KeyboardInterrupt:
             print('ending training')
         finally:

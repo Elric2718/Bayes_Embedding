@@ -256,7 +256,7 @@ class BayesNetwork(object):
         with tf.Session(graph=self.graph) as session:
             self._restore_model(session)
             mu1 = session.run([self.mu1], {self.z1: z})
-        return mu1
+        return np.array(mu1)
 
     def decode(self, mu, h):
         """
@@ -266,6 +266,6 @@ class BayesNetwork(object):
             self._restore_model(session)
             f1, new_h1 = session.run([self.f1, self.new_h1], {self.h1: h, self.delta1: mu})
             
-        return f1, new_h1
+        return np.array(f1), np.array(new_h1)
 
     
