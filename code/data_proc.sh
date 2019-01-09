@@ -1,4 +1,5 @@
 #!/bin/bash
+# This is a bash script to preproces the data. It is used with functions/classes in input.py, and will be deprecated in the future.
 
 input_file=$1
 output_file=$2

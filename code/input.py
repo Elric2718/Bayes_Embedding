@@ -1,3 +1,6 @@
+""" This script contains a number of functions and classes that are used to preprocess the data.
+"""
+
 import numpy as np
 import subprocess
 import pandas as pd

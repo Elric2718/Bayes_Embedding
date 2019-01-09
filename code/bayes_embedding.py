@@ -1,3 +1,7 @@
+""" This module implements the Bayes Embedding method.
+
+"""
+
 import tensorflow as tf
 from tensorflow.contrib import learn
 import os
