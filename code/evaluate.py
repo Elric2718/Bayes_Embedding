@@ -7,12 +7,14 @@ import inspect
 import types
 
 
-def measurement(predictions, labels):
+def measurement(predictions, signals, supervision_type = "classification"):
     """
     """
-
-    accuracy = np.mean(predictions - labels == 0)
-    return accuracy
+    if supervision_type == "classification":
+        results = np.mean(predictions - signals == 0)
+    else:
+        results = np.mean(np.square(predictions - signals)) * 0.5
+    return results
 
 def build_mlp(input_placeholder,\
                   output_size,\
@@ -67,15 +69,15 @@ def setup_logger(logdir, locals_):
     # Configure output directory for logging
     logz.configure_output_dir(logdir)
     # Log experimental parameters
-    args = inspect.getargspec(Classifier.__init__)[0]
+    args = inspect.getargspec(Supervisor.__init__)[0]
     params = {k: locals_[k] if k in locals_ and not isinstance(locals_[k], types.FunctionType) and k is not "self" else None for k in args}
     logz.save_params(params)
     
-class Classifier(object):
+class Supervisor(object):
     def __init__(self,\
                      n_batch = 100,\
                      n_feat = None,\
-                     n_label = None,\
+                     n_signal = None,\
                      n_layers = 2,\
                      layer_size = 128,\
                      activation = 0.001,\
@@ -84,7 +86,8 @@ class Classifier(object):
                      learning_rate = 0.001,\
                      n_epoch = 100,\
                      seed = 0,\
-                     checkpoint_path = 'checkpoints/classification_model.ckpt',\
+                     supervision_type = "classification",\
+                     checkpoint_path = None,\
                      logdir = None):
         """
         Initialize the object.
@@ -92,7 +95,7 @@ class Classifier(object):
         Args:
             n_batch: mini-batch size.             
             n_feat: number of features
-            n_label: number of labels
+            n_singal: number of labels for classification or 1 for regression
             n_layers: number of layers
             layer_size: number of hidden states per layer
             learning_rate: the initial learning rate of the optimization algorithm.
@@ -101,10 +104,10 @@ class Classifier(object):
             checkpoint_path: path to the optimized model parameters.
         """
 
-        assert None not in [n_feat, n_label, logdir]
+        assert None not in [n_feat, n_signal, logdir]
         self.n_batch = n_batch
         self.n_feat = n_feat
-        self.n_label = n_label
+        self.n_signal = n_signal
         
         self.n_layers = n_layers
         self.layer_size = layer_size
@@ -115,6 +118,7 @@ class Classifier(object):
         self.learning_rate = learning_rate
         self.n_epoch = n_epoch
         self.seed = seed
+        self.supervision_type = supervision_type
         self.checkpoint_path = checkpoint_path
 
         self.learning_curve = {'train': [], 'val': []}
@@ -126,30 +130,34 @@ class Classifier(object):
         """
         
         features = tf.placeholder(shape = [None, self.n_feat], name = "features", dtype = tf.float32)
-        labels = tf.placeholder(shape=[None], name = "labels", dtype = tf.int32)
+        if self.supervision_type == "classification":
+            signals = tf.placeholder(shape=[None], name = "labels", dtype = tf.int32)
+        elif self.supervision_type == "regression":
+            signals = tf.placeholder(shape=[None], name = "values", dtype = tf.float32)
 
-        return features, labels
+        return features, signals
 
     def policy_forward_pass(self, ob_ph):
         """
         """
         
-        logits = build_mlp(input_placeholder = self.features,\
-                           output_size = self.n_label,\
-                           scope = "classification",\
+        output = build_mlp(input_placeholder = self.features,\
+                           output_size = self.n_signal,\
+                           scope = self.supervision_type,\
                            n_layers = self.n_layers,\
                            size = self.layer_size,\
                            activation = self.activation,\
                            output_activation = self.output_activation,\
                            stddev = self.nn_init_stddev)
-        return logits
+        return tf.squeeze(output)
 
     def get_log_prob(self, logits, labels):
         """
         """
         
         logprob = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = labels, logits = logits + tf.Variable(1e-4))
-        return logprob
+        return logprob    
+
 
     def create_optimizer(self, loss, learning_rate):
         """
@@ -164,7 +172,7 @@ class Classifier(object):
         """
 
         ops = [self.loss, self.optimizer] if optimize else [self.loss]
-        loss =  session.run(ops, {self.features: batch["features"], self.labels: batch["labels"]})
+        loss =  session.run(ops, {self.features: batch["features"], self.signals: batch["signals"]})
 
         return loss[0]
             
@@ -173,13 +181,14 @@ class Classifier(object):
         """
         """
         with tf.Graph().as_default() as graph:
-            self.features, self.labels = self.define_placeholders()
+            self.features, self.signals = self.define_placeholders()
+            self.pred_results = self.policy_forward_pass(self.features)
 
-            self.logits = self.policy_forward_pass(self.features)
-            
-            self.logprob = self.get_log_prob(self.logits, self.labels)
-            
-            self.loss = tf.reduce_mean(self.logprob)
+            if self.supervision_type == "classification":                           
+                self.logprob = self.get_log_prob(self.pred_results, self.signals)
+                self.loss = tf.reduce_mean(self.logprob)
+            elif self.supervision_type == "regression":
+                self.loss = tf.reduce_mean(tf.square(self.pred_results - self.signals)) * 0.5
 
             self.optimizer = self.create_optimizer(self.loss, self.learning_rate)
 
@@ -264,8 +273,11 @@ class Classifier(object):
 
         with tf.Session(graph = self.graph) as session:
             self._restore_model(session)
-            logits = session.run(self.logits, {self.features: features})
-            predictions = np.argmax(logits, axis = 1)
+            pred_results = session.run(self.pred_results, {self.features: features})
+            if self.supervision_type == "classification":
+                predictions = np.argmax(pred_results, axis = 1)
+            elif self.supervision_type == "regression":
+                predictions = pred_results
         return predictions
 
     

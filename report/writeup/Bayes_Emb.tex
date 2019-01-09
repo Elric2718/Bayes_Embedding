@@ -1,0 +1,184 @@
+
+% LaTeX2e document class file for submissions to sigkdd explorations.
+% It is an example which *does* use the .bib file (from which the .bbl file
+% is produced).
+% REMEMBER HOWEVER: After having produced the .bbl file,
+% and prior to final submission,
+% you need to 'insert'  your .bbl file into your source .tex file so as to provide
+% ONE 'self-contained' source file.
+%
+% Questions regarding SIGS should be sent to
+% Adrienne Griscti ---> griscti@acm.org
+%
+% Questions/suggestions regarding the guidelines, .tex and .cls files, etc. to
+% Gerald Murray ---> murray@acm.org
+%
+
+\documentclass{sigkddExp}
+%\usepackage{geometry}
+%\usepackage[a4paper,bindingoffset=0in,%
+% left=0.5in,right=0.3in,top=0.5in,bottom=0.3in,%
+%             footskip=0in,hoffset=-0.5in, voffset=-0.4in]{geometry}
+\usepackage[authoryear,round,longnamesfirst]{natbib}
+\usepackage{url,amsmath,amsfonts,amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage[T1]{fontenc}
+\usepackage{enumerate}   
+\usepackage{color}
+\usepackage{relsize}
+\usepackage{inputenc}
+\usepackage{multirow}
+
+
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+\newtheorem{properties}{Properties}
+\newtheorem{example}{Example}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{observation}{Observation}
+
+%\def \endprf{\hfill {\vrule height6pt width6pt depth0pt}\medskip}
+%\newenvironment{proof}{\noindent {\bf Proof} }{\endprf\par}
+
+\newcommand{\R}{{\mathbb R}}
+\newcommand{\Z}{{\mathbb Z}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\B}{{\mathbb B}}
+\newcommand{\bz}{{\mathbf z}}
+\newcommand{\bh}{{\mathbf h}}
+\newcommand{\bff}{{\mathbf f}}
+\newcommand{\bdelta}{{\mathbf \delta}}
+\newcommand{\bsigma}{{\mathbf \sigma}}
+\newcommand{\bmu}{{\mathbf \mu}}
+
+\newcommand{\M}{{\mathcal M}}
+\newcommand{\F}{{\mathcal F}}
+\newcommand{\E}{{\mathbb E}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\U}{\mathcal{U}}
+\newcommand{\V}{\mathcal{V}}
+
+
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\di}{{i\mkern1mu}}
+
+
+\newcommand{\Var}{\textit{var}}
+
+
+
+
+ \setlength{\oddsidemargin}{0pt}
+ \setlength{\evensidemargin}{0pt}
+ \setlength{\textwidth}{6.7in}
+ \setlength{\topmargin}{0in}
+ \setlength{\textheight}{8.5in}
+
+ 
+\begin{document}
+%
+% --- Author Metadata here ---
+% -- Can be completely blank or contain 'commented' information like this...
+%\conferenceinfo{WOODSTOCK}{'97 El Paso, Texas USA} % If you happen to know the conference location etc.
+%\CopyrightYear{2001} % Allows a non-default  copyright year  to be 'entered' - IF NEED BE.
+%\crdata{0-12345-67-8/90/01}  % Allows non-default copyright data to be 'entered' - IF NEED BE.
+% --- End of author Metadata ---
+
+\title{Bayesian Embedding --- a generic framework for incorporating prior knowledge into graph embedding }
+%\subtitle{[Extended Abstract]
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+%
+% Up to the first three authors are aligned under the title;
+% use the \alignauthor commands below to handle those names
+% and affiliations. Add names, affiliations, addresses for
+% additional authors as the argument to \additionalauthors;
+% these will be set for you without further effort on your
+% part as the last section in the body of your article BEFORE
+% References or any Appendices.
+
+\numberofauthors{6}
+%
+% You can go ahead and credit authors number 4+ here;
+% their names will appear in a section called
+% "Additional Authors" just before the Appendices
+% (if there are any) or Bibliography (if there
+% aren't)
+
+% Put no more than the first THREE authors in the \author command
+%%You are free to format the authors in alternate ways if you have more 
+%%than three authors.
+
+\author{
+%
+% The command \alignauthor (no curly braces needed) should
+% precede each author name, affiliation/snail-mail address and
+% e-mail address. Additionally, tag each line of
+% affiliation/address with \affaddr, and tag the
+%% e-mail address with \email.
+\alignauthor Yuting Ye \\
+       \affaddr{~}\\
+       \affaddr{~}\\
+       \affaddr{~}\\
+       \email{~}
+\alignauthor Xuwu Wang\\
+       \affaddr{~}\\
+       \affaddr{~}\\
+       \affaddr{~}\\
+       \email{~}
+% \alignauthor Lars Th{\o}rv\"{a}ld\titlenote{This author is the
+% one who did all the really hard work.}\\
+%        \affaddr{The Th{\o}rv\"{a}ld Group}\\
+%        \affaddr{1 Th{\o}rv\"{a}ld Circle}\\
+%        \affaddr{Hekla, Iceland}\\
+%        \email{larst@affiliation.org}
+}     
+%\additionalauthors{Additional authors: John Smith (The Th{\o}rvald Group,
+%email: {\texttt{jsmith@affiliation.org}}) and Julius P.~Kumquat
+%(The Kumquat Consortium, email: {\texttt{jpkumquat@consortium.net}}).}
+
+    
+%\date{28 December 2018}
+\maketitle
+\begin{abstract}
+This paper provides a Bayesian framework, called BEM (Bayes EMbedding) that bridges the knowledge graph and entity-specific information. This framework is highly flexible in that it can take as input either the raw data or pre-trained embeddings. On the one hand, BEM can mutually correct the embeddings from two sides, one from the knowledge graph and the other one from the entity information. The corrected embeddings are enriched with the information from the other side. On the other hand, BEM holds the promise of making an end-to-end embedding network that uses the knowledge graph to guide the downstream embedding learning. Extensive experiments have been done to display the efficacy of BEM.
+\end{abstract}
+
+\input{introduction}
+\input{method}
+\input{experiments}
+\input{discussion}
+
+%
+% The following two commands are all you need in the
+% initial runs of your .tex file to
+% produce the bibliography for the citations in your paper.
+\bibliographystyle{abbrv}
+\bibliography{Bayes_Em}  % sigproc.bib is the name of the Bibliography in this case
+% You must have a proper ".bib" file
+%  and remember to run:
+% latex bibtex latex latex
+% to resolve all references
+%
+% ACM needs 'a single self-contained file'!
+%
+%APPENDICES are optional
+% SIGKDD: balancing columns messes up the footers: Sunita Sarawagi, Jan 2000.
+% \balancecolumns
+%\appendix
+
+% That's all folks!
+\end{document}

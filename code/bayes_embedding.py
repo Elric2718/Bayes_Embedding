@@ -12,16 +12,17 @@ class BayesNetwork(object):
     """
 
     def __init__(self,
-                     n_batch = 100,\
-                     n_prior = None,\
-                     n_hidden = 500,\
-                     n_obs = None,\
-                     learning_rate = 0.001,\
-                     lambda1 = 1,\
-                     lambda2 = 1,\
-                     n_epoch = 100,\
-                     seed = 0,\
-                     checkpoint_path = 'checkpoints/model.ckpt'):
+                 n_batch = 100,\
+                 n_prior = None,\
+                 n_hidden = 500,\
+                 n_obs = None,\
+                 learning_rate = 0.001,\
+                 lambda1 = 1,\
+                 lambda2 = 1,\
+                 n_epoch = 100,\
+                 seed = 0,\
+                 checkpoint_path = 'checkpoints/model.ckpt',\
+                 log_file = None):
         """
         Initialize the object.
         
@@ -46,6 +47,7 @@ class BayesNetwork(object):
         self.n_epoch = n_epoch
         self.seed = seed
         self.checkpoint_path = checkpoint_path
+        self.log_file = log_file
         
 
         self.learning_curve = {'train': [], 'val': []}                 
@@ -238,6 +240,15 @@ class BayesNetwork(object):
                     print('epoch: {:2d}, step: {:5d}, training error: {:03.4f}, '
                           'validation error: {:03.4f}, time elapsed: {:4.0f} s'
                           .format(train.epochs_completed, step, train_error, val_error, time.time() - start))
+                    if ((step + 1)/num_steps_in_epoch <= 5\
+                       or (step + 1)/num_steps_in_epoch >= self.n_epoch - 5)\
+                       and os.path.isfile(self.log_file):
+                        write_file=open(self.log_file, "a+")
+                        write_file.write('epoch: {:2d}, step: {:5d}, training error: {:03.4f}, '
+                                         'validation error: {:03.4f}, time elapsed: {:4.0f} s.\n'
+                                         .format(train.epochs_completed, step, train_error, val_error, time.time() - start))
+                        write_file.close()
+                    
         except KeyboardInterrupt:
             print('ending training')
         finally:

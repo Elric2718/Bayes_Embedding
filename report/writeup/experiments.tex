@@ -1,0 +1,78 @@
+\section{Experiments}
+
+\subsection{Data description}
+We mainly use two datasets for evaluation. One dataset is a subset of E-commerce data from Alibaba on November 28th for the mother\&baby scenario, termed as \textit{Alibaba-MB}. In this dataset, we have $377,183$ items, each of which has $22$ continuous attributes and $10$ discrete attributes (details of the attributes are deferred to the appendix). All these attributes appear as the head entity in $5,565,558$ triplets. There are $1,931$ relations ($2,000$ properties for ``HasProperty'', ``IsInstanceOf'', ``BelongToScenario'') and tail entities ($430$ categories, $1,511,000$ values, $111,000$ concepts). Another dataset is the public dataset \textit{FBK15}. It has $14,904$ entities appearing as both the heads and tails in $579,655$ triplets. For each entity, we find an associated short paragraph in the database \textit{freebase} that describes the entity.
+
+
+\subsection{Embedding correction}
+We first investigate the performance of BEM for embedding correction. For the dataset \textit{Ali-MB}, the item attributes, along with item graph obtained by user behaviour, are used to get the item embeddings by \textit{GraphSAGE}. For the dataset \textit{FBK15}, the entity-specific description paragraphs are fed into \textit{doc2vec} for embeddings. As with the knowledge graph, \textit{TransE} (we utilize the implementation from the OpenKE library) is used to obtain the embeddings using the triplets. We call the embeddings from item attribute as ``embedding(item)'', the embeddings from the description paragraphs as ``embedding(desc)'',  and those from knowledge graph as ``embedding(kg)'' respectively. Multiple tasks are studied to compare the embeddings before and after the correction by BEM.
+
+\subsubsection{Item Prediction for \textit{Alibaba-MB}}\label{sec:item_pred_ali_mb}
+There are two classification tasks, that is, to predict item categories of level 1 (L1) and level 2 (L2). We have $83$ L1 categories and $580$ L2 categories. The evluation measurement for this task is $\text{classification accuracy}:= \#\{\text{correctly classified items}\}/\#\{\text{total items}\}$. In addition, we execute two regression tasks, that is, to predict item prices and item popularities. We use the squared $\ell_2$ norm for evaluation. We note that the category information is used in the training of item embedding and knowledge graph embedding, while the item price and popularity are only used in the training of item embedding. We use a one-hidden-layer MLP with $32$ hidden nodes for classification or regression. 
+
+Table \ref{tbl:item_pred_ali_mb} displays the results of the four tasks for item embeddings and kg embeddings before and after correction by BEM respectively. The extremely high accuracy of the two classification tasks results from the leaky information ---  the features partially include the predictors. Nevertheless, the knowledge graph and item attributes see different degrees of leak. It seems that the original embedding(item) is better informed of the categories than the original embedding(kg). After correction, the embedding(kg) always benefits from getting information from the other side in terms of classification accuracy, while the result of the embedding(item) gets worse for the level-2 category. It verifies the fundamental motivation of BEM that it merges two sides of embeddings. As with the two regression tasks, we observe similar results as the classification tasks. The item attributes include the price level but the knowledge graph does not, thus the original embedding(item) has a lower loss than the corrected one. The corrected embedding(kg) is obviously benefitted from learning the embedding(item). As for the task of predicting the item popularity, the predictors concentrate on low values but there are quite a few outliers. Therefore, the results display a high variance that masks the same trend as the task of predicting the price.
+
+
+
+\begin{table}[h]
+  \caption{Classification/Regression results for BEM on the \textit{Alibaba-MB} dataset. Predictors category(L1/L2) correspond to using level1/level2 category for classification, while predictors price level/popularity correspond to using the item price or the item popularity for regression.}
+  \label{tbl:item_pred_ali_mb}
+  \centering
+\begin{tabular}{l|l|l|l|l}
+\hline
+Predictor      & \multicolumn{2}{l|}{embedding (item)} & \multicolumn{2}{l}{embedding (kg)} \\ \hline
+              & original          & corrected         & original         & corrected        \\ \hline
+category(L1) & 99.24\%           & 99.31\%           & 95.87\%          & 98.99\%          \\ 
+category(L2) & 96.93\%           & 94.06\%           & 90.89\%          & 96.86\%          \\ 
+price level   & 0.5392            & 0.6935            & 0.9309           & 0.6644           \\ 
+popoularity   & 1852              & 1962              & 2008             & 1977             \\ \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Link Prediction \& Triplet Classification for \textit{FBK15}}
+Two tasks are done to study the performance of BEM on the \textit{FBK15} dataset, i.e., link prediction (LP) and triplet classification (TC). Both the two tasks are executed using the default APIs from the OpenKE library, given the embeddings from the knowledge graph.
+
+The results for the two task with different parameters are presented in Table \ref{tbl:tune_par_fbk15}. The \textit{default} setting only uses the \textit{TransE} method without the BEM correction and with parameters $\#\text{epochs} = 500$, $\# \text{batches} = 100$, $\text{learning~rate} = 0.001$, $\text{margin} = 1.0$, $\text{embedding~dimension} = 100$, and etc.. The \textit{noisy} setting only trains the relation embeddings while leaving the entity embeddings as initialized. The two \textit{Tune-TransE} settings have exactly the same parameters as the \textit{default} setting except for the ones they specify. As for the six settings in \textit{Tune-BEM}, they utilize the BEM method to incorporate the information from the description paragraphs into the embedding(kg). The setting with $\text{learning rate} = 0.001$ is exactly the same parameters for \textit{TransE} as the \textit{default} one. Its parameters for BEM are $\lambda_1 = 1.0$, $\lambda_2 = 1.0$, $\# \text{epochs} = 20$, $\# \text{batches} = 500$, $\text{learning~rate} = 0.001$. Other settings differs from the setting with $\text{learning rate} = 0.001$ only in the parameter they specify.
+
+The results of corrected embedding(kg) are inferior to those of the original embeddings in the task of link prediction and triplet classification. This results from the fact that the description paragraphs do not contain sufficient information about knowledge graph triplets to benefit the other side. A direct implication is that the results of the corrected embedding(kg) get worse as more information from the description paragraphs is incorporated into it. On the other hand, we still get valuable insight by comparing the results between distinct parameters. $\lambda_1$ and $\lambda_2$ play the role of coefficients that adjust the trade-off between the reconstruction term and the penality term (KL divergence). Small $\lambda_1$ forces the corrected embedding(kg) to get close to the original one while small $\lambda_2$ forces any pair of the corrected embeddings(desc) to distribute as far as the original pair. 
+
+
+\begin{table*}[h]
+  \caption{Link prediction (LP)/Triplet classification (TC) results for BEM on the \textit{FBK15} dataset. The result with one tuning parameter (except for tuning BEM) only differs in this parameter from the default. The result with one tuning parameter (for tuning BEM) only differs in this parameter from the setting of $\text{learning rate = } 0.001$.}
+  \label{tbl:tune_par_fbk15}
+  \centering
+\begin{tabular}{l|l|l|l|l|l|l|l|l|l|l|l}
+\hline
+  task        &metrics  & default & noisy  & \multicolumn{2}{c|}{Tune-TransE} &  \multicolumn{6}{c}{Tune-BEM} \\ \hline
+         &  &  & & (batch, epoch) & dim & \multicolumn{2}{c|}{learning rate} & \multicolumn{2}{c|}{$\lambda_1$} & \multicolumn{2}{c}{$\lambda_2$} \\ \hline
+            & & & & ($800, 1000$) & $50$ & $0.001$ & $0.005$ & $0.1$ & $2$ & $0.1$ & $2$ \\ \hline
+  \multirow{4}{*}{LP} & MR & $63$ & $5693$ & $69$ & $66$ & $82$ & $69$ & $65$ & $93$ & $79$ & $73$  \\
+             & hit@10& $71.83\%$ & $8.39\%$ & $76.11\%$ & $62.97\%$ & $60.26\%$ & $63.55\%$ & $67.24\%$ & $55.25\%$ & $59.00\%$ & $62.34\%$ \\
+             & hit@5 & $54.41\%$ & $7.43\%$ & $59.08\%$ & $45.19\%$ & $41.45\%$ & $47.59\%$ & $48.84\%$ & $37.25\%$ & $40.61\%$ & $43.62\%$ \\
+             & hit@1 & $32.60\%$ & $6.58\%$ & $35.56\%$ & $26.88\%$ & $21.49\%$ & $25.86\%$ & $26.65\%$ & $19.76\%$ & $21.59\%$ & $23.61\%$ \\\hline
+  TR & accuracy & $85.99\%$ & $52.67\%$ & $87.48\%$ & $85.28\%$ & $82.65\%$ & $84.01\%$ & $85.50\%$ & $80.73\%$ & $82.27\%$ & $83.38\%$ \\\hline
+  
+\end{tabular}
+\end{table*}
+
+
+\subsubsection{Entity Classification for \textit{FBK15}}
+We investigate the performance the corrected embeddings(desc) and embeddings(kg) obtained from the \textit{FBK15} dataset on another task. We note that the relations in this dataset not only contains the true relation between the head entity and the tail entity, but also include the domain and category words potentially associated with the entities. We retrieve the category labels for each entity from all the relations it is connected with in existing triplets. One entity can have multiple labels and we use the one of the highest occurence across all entities. We are aware that such label is not perfectly reliable due to the potentially leaky information during the training of the embedding(kg) and the naive selection of labels. Once the embeddings are obtained, the classification task is done via a one-hidden-layer MLP with $32$ hidden nodes.
+
+Tabel \ref{tbl:entity_class_fbk15} displays the classification accuracy of the corrected embeddings in contrast to the orignal ones. We study the embedding(desc), the embedding(kg) and the embedding obtained by concatenating both of them. The original embedding(kg) can better distinguish the entity category, which implies that the training process sees partial information about the labels. We note that the embeddings by concatnating the original two types of embeddings perform better than single embeddings regardless of whether corrected or not. It is easily understood since the concatenation operation does not lose information from both sides in distinction to BEM. However, BEM obviously benefits the embeddings in that all the corrected ones are superior to the corresponding orignal ones. And the corrected embedding(kg) attains pretty close accuracy as the orinal concatenated embedding. It is not fully clear whether the gap is caused by the more expressive classifier for the concatenated embedding (its input size is double that of the single embedding). In fact, the single embedding and the concatnated embedding are not directly comparable. Still, we see that the BEM implicitly increases the singal-to-ratio even for the concatenated embeddings with respect to the task of classifying entity labels.
+
+\begin{table}[h]
+  \caption{Classification results for BEM on the \textit{FBK15} dataset. The abbreviation \textit{desc} refers to embeddings from entity-specific description paragraphs, \text{kg} refers to the embeddings from the knowledge graph, \text{concat} refers to concatenting the desc embeddings nd the kg embeddings.}
+  \label{tbl:entity_class_fbk15}
+  \centering
+\begin{tabular}{l|l|l|l}
+\hline
+          & \multicolumn{3}{c}{embedding} \\ \hline
+          & desc     & kg       & concat   \\ \hline
+original  & 62.10    & 68.19    & 72.33    \\ 
+corrected & 66.01    & 72.00    & 73.83    \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{End-to-end learning by BEM}
+ 
