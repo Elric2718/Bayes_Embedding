@@ -1,8 +1,9 @@
 # customered
 data/
 checkpoints/
-code/OpenKE/
 *~
+*\#
+.\#*
 
 
 # Byte-compiled / optimized / DLL files
