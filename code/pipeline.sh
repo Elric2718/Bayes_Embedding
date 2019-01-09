@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# A script that automatically runs Bayes Embedding, then updates the .json file from TransE, finally evaluates the embedding on link prediction and triplet classification tasks.
+
 activation=$1
 log_file=$2
 echo -e $activation

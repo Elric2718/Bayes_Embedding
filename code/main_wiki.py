@@ -1,3 +1,5 @@
+""" The main file to call Bayes Embedding on the wiki data.
+"""
 import tensorflow as tf
 import numpy as np
 import input as _input

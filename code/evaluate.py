@@ -1,3 +1,6 @@
+""" This module implements a classifier/regressor used to evaluate the embeddings on the classification/regression tasks.
+"""
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf

@@ -1,3 +1,6 @@
+""" main file for the evaluating the embedding on classification/regression tasks.
+"""
+
 import tensorflow as tf
 import numpy as np
 import input as _input

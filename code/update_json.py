@@ -1,3 +1,5 @@
+""" This file updates the .json file by transE. It needs to manually change the intput files.
+"""
 import input as _input
 
 if __name__ == "__main__":
