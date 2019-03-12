@@ -10,14 +10,64 @@ import inspect
 import types
 
 
-def measurement(predictions, signals, supervision_type = "classification"):
+def measurement(predictions, signals, supervision_type = "classification", **args):
     """
     """
     if supervision_type == "classification":
-        results = np.mean(predictions - signals == 0)
-    else:
-        results = np.mean(np.square(predictions - signals)) * 0.5
-    return results
+        return np.mean(predictions - signals == 0)
+    elif supervision_type == "l2":
+        return np.mean(np.square(predictions - signals)) * 0.5
+    elif supervision_type == "hit-MR":
+        top_K = args["top_K"]
+        info_df = args["info_df"]
+
+        item_info_dict = dict(zip(list(info_df.take([0], axis = 1).values.flatten()), list(info_df.take([1], axis = 1).values.flatten())))
+        
+        n_usrs = signals.shape[0]
+        n_results = len(top_K) + 1
+        
+        results = np.zeros((n_usrs, n_results))
+        start_time = time.time()
+        for idx, row in signals.iterrows():            
+            try:
+                retrieved_items = [item_info_dict[item_id] for item_id in predictions[row["usr_id"]][0].split(",") if item_id in item_info_dict]
+                n_level, n_trigger_item = predictions[row["usr_id"]][1]
+
+                test_items = set([item_info_dict[item_id] for item_id in row["test_item"].split(",") if item_id in item_info_dict])
+                n_test = len(test_items)               
+                
+                assert n_trigger_item >= 1
+                assert n_test >= 1
+            except:
+                results[idx] = np.array([np.nan] * n_results)                
+                continue
+            
+            n_total_retrieved = n_level * n_trigger_item
+    
+            # compute hit scores
+            for j, K in enumerate(top_K):
+                bucket_size = int(np.ceil(int(K) * 1.0/n_trigger_item)) * n_trigger_item
+                results[idx][j] = len(test_items.intersection(set(retrieved_items[: bucket_size])))/n_test
+                
+            # compute mean rank
+            for itm in test_items:
+                if itm in retrieved_items:
+                    results[idx][n_results - 1] += (int(retrieved_items.index(itm)/n_trigger_item) + 0.5) * n_trigger_item
+                else:
+                    results[idx][n_results - 1] += n_total_retrieved
+                results[idx][n_results - 1] = results[idx][n_results - 1]/n_test
+
+            if idx % 10000 == 0:
+                print("User id: {idx}; Elapsed time: {elapsed_time}s.".format(idx = idx, elapsed_time = time.time() - start_time))
+
+
+        return {'mean': np.nanmean(results, axis = 0),\
+                'std': np.nanstd(results, axis = 0),\
+                'Q25': np.nanquantile(results, 0.25, axis = 0),\
+                'Q50': np.nanquantile(results, 0.5, axis = 0),\
+                'Q75': np.nanquantile(results, 0.75, axis = 0),\
+                'Q90': np.nanquantile(results, 0.9, axis = 0),\
+                'Q95': np.nanquantile(results, 0.95, axis = 0)}
 
 def build_mlp(input_placeholder,\
                   output_size,\
@@ -209,7 +259,9 @@ class Supervisor(object):
         """      
 
         self.graph = self.build_computation_graph()
-        self.sess = tf.Session(graph=self.graph)
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        self.sess = tf.Session(graph=self.graph, config = config)
         self.sess.run(self.initializer)
 
         num_steps_in_epoch = dataset.num_train // self.n_batch
@@ -273,8 +325,10 @@ class Supervisor(object):
     def predict(self, features):
         """
         """
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
 
-        with tf.Session(graph = self.graph) as session:
+        with tf.Session(graph = self.graph, config = config) as session:
             self._restore_model(session)
             pred_results = session.run(self.pred_results, {self.features: features})
             if self.supervision_type == "classification":

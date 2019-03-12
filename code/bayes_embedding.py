@@ -107,8 +107,8 @@ class BayesNetwork(object):
         mu1 = layers.Dense(self.n_prior)(h)
         log_sigma1_squared = layers.Dense(self.n_prior)(h)
 
-        mu2 = layers.Dense(self.n_prior)(h)
-        log_sigma2_squared = layers.Dense(self.n_prior)(h)
+        mu2 = layers.Dense(self.n_obs)(h)
+        log_sigma2_squared = layers.Dense(self.n_obs)(h)
 
         return mu1, log_sigma1_squared, mu2, log_sigma2_squared
         
@@ -264,13 +264,13 @@ class BayesNetwork(object):
             print('finished training')
         return self                  
 
-    def encode(self, z):
+    def encode(self, z, h):
         """
         """
 
         with tf.Session(graph=self.graph) as session:
             self._restore_model(session)
-            mu1 = session.run([self.mu1], {self.z1: z})
+            mu1 = session.run([self.mu1], {self.z1: z, self.h1: h})
         return np.array(mu1)
 
     def decode(self, mu, h):

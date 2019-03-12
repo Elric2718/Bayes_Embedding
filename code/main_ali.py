@@ -5,20 +5,18 @@ import numpy as np
 import input as _input
 import bayes_embedding_nf as be
 import pandas as pd
-import argparse 
+import argparse
 import os
 import pickle
 
-###################
-###### wiki #######
-###################
+###########################
+###### ali selected #######
+###########################
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_or_pred', '-trpr', type=str, default='train')
-    parser.add_argument('--data_type', '-dt', type=int, default=3)
-    parser.add_argument('--kg_type', '-kt', type=str, default="wiki_TransE")
-    parser.add_argument('--behavior_type', '-bt', type=str, default="desc_doc2vec")
+    parser.add_argument('--data_type', '-dt', type=int, default=4)
     parser.add_argument('--learning_rate', '-lr', type=float, default=0.001)
     parser.add_argument('--n_batch', '-nb', type=int, default=500)
     parser.add_argument('--n_hidden', '-nh', type=int, default=500)
@@ -26,16 +24,16 @@ if __name__ == "__main__":
     parser.add_argument('--lambda2', '-lbd2', type=float, default=1.0)
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--n_epoch', '-nepoch', type=int, default=20)
-    parser.add_argument('--nf_K', '-nfK', type=int, default=0)
+    parser.add_argument('--nf_K', '-nfK', type=int, default=8)
     parser.add_argument('--pair_or_single', '-pos', type=str, default="pair")
     parser.add_argument('--split_ratio', '-sr', type=float, default=0.8)
     parser.add_argument('--Decare_rounds', '-dr', type=int, default=10)
     parser.add_argument('--to_split', '-split', action = 'store_true')
     parser.add_argument('--to_normalize', '-norm', action = 'store_true')
-    parser.add_argument('--log_file', '-lf', type=str, default="test.txt")
-    parser.add_argument('--output_prefix', '-op', type=str, default="/wiki_net2")
+    parser.add_argument('--log_file', '-lf', type=str, default="/log_main.txt")
     parser.add_argument('--pickle_prefix', '-pp', type=str, default="/ali_selected")
-    parser.add_argument('--checkpoint', '-cp', type=str, default="model.ckpt")
+    parser.add_argument('--output_prefix', '-op', type=str, default="/ali_selected")
+    
     args = parser.parse_args()
 
     train_or_pred = args.train_or_pred
@@ -50,20 +48,17 @@ if __name__ == "__main__":
     pair_or_single = args.pair_or_single
     seed = args.seed
     data_type = args.data_type
-    kg_type = args.kg_type
-    behavior_type = args.behavior_type
-    checkpoint = args.checkpoint
-    
+
     data_path = "../data/data{data_type}".format(data_type = data_type)
-    output_path = data_path + args.output_prefix
+    output_path = data_path + args.output_prefix#"/wiki_ali3" #"/wiki"
     pickle_path = data_path + args.pickle_prefix
-    checkpoint_path = 'checkpoints/data{data_type}/{checkpoint}'.format(data_type = data_type, checkpoint = checkpoint)
-    log_file = args.log_file
+    checkpoint_path = 'checkpoints/data{data_type}/model.ckpt'.format(data_type = data_type)
+    log_file = data_path + "/log" + args.log_file
 
     # parameters
     if train_or_pred == "train":        
-        input1_path = data_path + "/behavior_{behavior_type}.txt".format(behavior_type = behavior_type)#"/wiki_citation_net_emb_final.txt"#"/embedding_desc.txt"
-        input2_path = data_path + "/kg_{kg_type}.txt".format(kg_type = kg_type) 
+        input1_path = data_path + "/item_emb_20181231.txt"  #"/wiki_pagelink.txt"#"/wiki_citation_net_emb_final.txt"#"/embedding_desc.txt"
+        input2_path = data_path + "/alidata201909_kg_ent.txt"
 
         # extract the shared data that appears in both kg and behavior
         entity2id_path = data_path + "/entity2id.txt"
@@ -79,7 +74,7 @@ if __name__ == "__main__":
         Decare_rounds = args.Decare_rounds if pair_or_single == "pair" else 1
         to_split = args.to_split
         to_normalize = args.to_normalize
-
+        
         with tf.device("/cpu:0"):
             if os.path.exists(pickle_path + "_raw_dat.pkl"):
                 with open(pickle_path + "_raw_dat.pkl", 'rb') as f:
@@ -98,6 +93,7 @@ if __name__ == "__main__":
                     
             n_prior = train.n_dat2
             n_obs = train.n_dat1
+                
         print("Finish processing the data.")        
     else:
         print("Start prediction.")
@@ -105,8 +101,8 @@ if __name__ == "__main__":
             data_id = np.array(pd.read_csv(id_path, sep = "#", header = None, names = ["item_id"])["item_id"].values)
             dataset1 = _input.decode_csv(input1_path)
             dataset2 = _input.decode_csv(input2_path)
-            
-        print("Finish loading the prediction data.")            
+
+        print("Finish loading the prediction data.")
         n_prior = dataset2.shape[1]
         n_obs = dataset1.shape[1]
 
@@ -136,7 +132,7 @@ if __name__ == "__main__":
         print("Finish estimating the parameters")
         new_z, new_h = model.decode(mu, dataset2)
         print("Finish predicting the data")
-
+        
         new_z_df = pd.DataFrame({"item_id": data_id, "new_data1": np.array([','.join(line.astype(str)) for line in new_z])})
         new_h_df = pd.DataFrame({"item_id": data_id, "new_data2": np.array([','.join(line.astype(str)) for line in new_h])})
 
