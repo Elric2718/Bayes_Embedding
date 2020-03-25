@@ -23,21 +23,38 @@ def run_regression(train_embeds, train_labels, test_embeds, test_labels):
     log = MultiOutputClassifier(SGDClassifier(loss="log"), n_jobs=10)
     log.fit(train_embeds, train_labels)
 
-   
+
+    f1 = 0
+    for i in range(test_labels.shape[1]):
+        f1 += f1_score(test_labels[:,i], log.predict(test_embeds)[:,i], average="micro")
+        #print("F1 score (micro) for {i}".format(i = i), f1_score(test_labels[:,i], log.predict(test_embeds)[:,i], average="micro"))
+    f1 = f1/test_labels.shape[1]
+    print("F1 score (micro)", f1)
+    
     f1 = 0
     for i in range(test_labels.shape[1]):
         f1 += f1_score(test_labels[:,i], log.predict(test_embeds)[:,i], average="macro")
-        #print("F1 score", f1_score(test_labels[:,i], log.predict(test_embeds)[:,i], average="micro"))
+        #print("F1 score (macro) for {i}".format(i = i), f1_score(test_labels[:,i], log.predict(test_embeds)[:,i], average="macro"))
     f1 = f1/test_labels.shape[1]
-    print("F1 score", f1)
+    print("F1 score (macro)", f1)
+
+
+    f1 = 0    
+    for i in range(test_labels.shape[1]):
+        f1 += f1_score(test_labels[:,i], dummy.predict(test_embeds)[:,i], average="micro")
+        #print("Random baseline F1 score (micro) for i".format(i = i), f1_score(test_labels[:,i], dummy.predict(test_embeds)[:,i], average="micro"))
+    f1 = f1/test_labels.shape[1]
+    print("Random baseline F1 score (micro)", f1)
+
     
     f1 = 0    
     for i in range(test_labels.shape[1]):
         f1 += f1_score(test_labels[:,i], dummy.predict(test_embeds)[:,i], average="macro")
-        #print("Random baseline F1 score", f1_score(test_labels[:,i], dummy.predict(test_embeds)[:,i], average="micro"))
+        #print("Random baseline F1 score (macro) for i".format(i = i), f1_score(test_labels[:,i], dummy.predict(test_embeds)[:,i], average="macro"))
     f1 = f1/test_labels.shape[1]
-    print("Random baseline F1 score", f1)
+    print("Random baseline F1 score (macro)", f1)
 
+    
 if __name__ == '__main__':
     parser = ArgumentParser("Run evaluation on PPI data.")
     parser.add_argument("dataset_dir", help="Path to directory containing the dataset.")

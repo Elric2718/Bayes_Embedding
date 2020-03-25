@@ -1,0 +1,66 @@
+python trans.py -dn half-normal -link logit -alpha0 1.0 -shape 1.0 -ku 0.02 -gu 0.5 -ns 4000 -fh      
+
+
+python trans_fast.py -dn half-normal -link logit -alpha0 1.0 -shape 1.0 -ku 0.005 -gu 0.1 -ns 1000 -do
+
+
+
+python trans.py -dn gamma -link logit -alpha0 1.0 -shape 1.0 -ku 0.001 -kul 0.04 -gu 0.5 -ns 4000 -fh 
+
+
+
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransE" "pagelink_node2vec" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransE" "pagelink_node2vec" "single"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransD" "pagelink_node2vec" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransD" "pagelink_node2vec" "single"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransE" "pagelink_line" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransE" "pagelink_line" "single"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransD" "pagelink_line" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "3" "wiki_TransD" "pagelink_line" "single"
+
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransE" "desc_doc2vec" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransE" "desc_doc2vec" "single"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransD" "desc_doc2vec" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransD" "desc_doc2vec" "single"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransE" "desc_sent2vec" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransE" "desc_sent2vec" "single"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransD" "desc_sent2vec" "pair"
+./pipeline_wiki.sh "4" "0" "" "new" "2" "wiki_TransD" "desc_sent2vec" "single"
+
+
+
+
+
+./pipeline_wiki.sh "2,3" "0" "" "raw" "3" "wiki_TransE" "pagelink_graphsage" "pair"
+
+./pipeline_wiki.sh "1,2,3,4,5" "0" "" "new" "3" "wiki_TransE" "pagelink_graphsage" "pair"
+./pipeline_wiki.sh "1,2,3,4,5" "0" "" "new" "3" "wiki_TransE" "pagelink_graphsage" "single"
+
+
+./pipeline_wiki.sh "2,3" "0" "" "raw" "3" "wiki_TransD" "pagelink_graphsage" "pair"
+
+./pipeline_wiki.sh "1,2,3,4,5" "0" "" "new" "3" "wiki_TransD" "pagelink_graphsage" "pair"
+./pipeline_wiki.sh "1,2,3,4,5" "0" "" "new" "3" "wiki_TransD" "pagelink_graphsage" "single"
+
+
+
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransE" "pagelink_node2vec" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransE" "pagelink_node2vec" "single" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransD" "pagelink_node2vec" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransD" "pagelink_node2vec" "single" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransE" "pagelink_line" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransE" "pagelink_line" "single" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransD" "pagelink_line" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "3" "wiki_TransD" "pagelink_line" "single" "_concat"
+
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransE" "desc_doc2vec" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransE" "desc_doc2vec" "single" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransD" "desc_doc2vec" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransD" "desc_doc2vec" "single" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransE" "desc_sent2vec" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransE" "desc_sent2vec" "single" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransD" "desc_sent2vec" "pair" "_concat"
+./pipeline_wiki.sh "3" "0" "" "raw" "2" "wiki_TransD" "desc_sent2vec" "single" "_concat"
+
+
+

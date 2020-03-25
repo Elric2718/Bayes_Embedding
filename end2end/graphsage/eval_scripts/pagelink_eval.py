@@ -17,10 +17,14 @@ def run_regression(train_embeds, train_labels, test_embeds, test_labels):
     log.fit(train_embeds, train_labels)
     print("Test scores")
     print(f1_score(test_labels, log.predict(test_embeds), average="micro"))
+    print(f1_score(test_labels, log.predict(test_embeds), average="macro"))
     print("Train scores")
     print(f1_score(train_labels, log.predict(train_embeds), average="micro"))
+    print(f1_score(train_labels, log.predict(train_embeds), average="macro"))
     print("Random baseline")
     print(f1_score(test_labels, dummy.predict(test_embeds), average="micro"))
+    print(f1_score(test_labels, dummy.predict(test_embeds), average="macro"))
+    
 
 if __name__ == '__main__':
     parser = ArgumentParser("Run evaluation on Reddit data.")
@@ -38,6 +42,8 @@ if __name__ == '__main__':
     
     train_ids = [str(n) for n in G.nodes() if not G.node[n]['val'] and not G.node[n]['test']]
     test_ids = [str(n) for n in G.nodes() if G.node[n][setting]]
+    # train_labels = [labels[i] for i in train_ids]
+    # test_labels = [labels[i] for i in test_ids]
     train_labels = np.array([np.argmax(labels[str(i)]) for i in train_ids])
     test_labels = np.array([np.argmax(labels[str(i)]) for i in test_ids])
 
@@ -45,18 +51,17 @@ if __name__ == '__main__':
         print("Using only features..")
         feats = np.load(dataset_dir + "/pagelink-feats.npy")
         ## Logistic gets thrown off by big counts, so log transform num comments and score
-        feats[:,0] = np.log(feats[:,0]+1.0)
-        feats[:,1] = np.log(feats[:,1]-min(np.min(feats[:,1]), -1))
-        feat_id_map = json.load(open(dataset_dir + "pagelink-id_map.json"))
-        feat_id_map = {id:val for id,val in feat_id_map.items()}
-        train_feats = feats[[feat_id_map[str(id)] for id in train_ids]] 
-        test_feats = feats[[feat_id_map[str(id)] for id in test_ids]] 
-        print("Running regression..")
+        feat_id_map = json.load(open(dataset_dir + "/pagelink-id_map.json"))
+        feat_id_map = {int(id):val for id,val in feat_id_map.items()}
+        train_feats = feats[[feat_id_map[int(id)] for id in train_ids]]
+        test_feats = feats[[feat_id_map[int(id)] for id in test_ids]]
+
         from sklearn.preprocessing import StandardScaler
         scaler = StandardScaler()
-        scaler.fit(train_feats)
+        scaler.fit(feats)
         train_feats = scaler.transform(train_feats)
         test_feats = scaler.transform(test_feats)
+                
         run_regression(train_feats, train_labels, test_feats, test_labels)
 
     elif "n2v" in data_dir:

@@ -1,6 +1,14 @@
 # customered
 data/
 checkpoints/
+end2end/
+report/
+fig/
+reading/
+presentation/
+others/
+code_backup/
+.gitignore
 *~
 *\#
 .\#*
