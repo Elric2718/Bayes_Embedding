@@ -13,10 +13,12 @@ CUDA_VISIBLE_DEVICES=1 python -u main_wiki.py  -trpr 'train' -df 1 -nb 500 -kt '
 CUDA_VISIBLE_DEVICES=1 python -u main_wiki.py  -trpr 'pred' -df 1 -nb 500 -kt 'wiki_TransE.txt' -bt 'pagelink_node2vec.txt' -pos 'pair'
 
 ## Evaluation on the classification task 
-* the raw embedding
+* the raw embedding:
+
 CUDA_VISIBLE_DEVICES=1 python -u main_eval_cl.py -df 1 -ron 'raw' -ioK 1 -dn 'wiki_net'
 
-* the new/corrected embedding
+* the new/corrected embedding:
+
 CUDA_VISIBLE_DEVICES=1 python -u main_eval_cl.py -df 1 -ron 'new' -ioK 1 -dn 'wiki_net'
 
 
