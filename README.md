@@ -1,5 +1,3 @@
-This project targets at using Bayesian method agglomerate multiple embeddings from different sources. The paper can be found at <https://arxiv.org/abs/1908.10611>.
-
 # Prerequisites:
 1. Tensorflow 1.10 or above
 2. Install faiss-cpu and faiss-gpu as per <http://github.com/facebookresearch/faiss/blob/master/INSTALL.md>.
@@ -25,7 +23,7 @@ This project targets at using Bayesian method agglomerate multiple embeddings fr
 If you encounter any bugs or have any specific feature requests, please [file an issue](https://github.com/Elric2718/Bayes_Embedding/issues).
 
 # Citation
-``
+---
 @inproceedings{ye2019bayes,
   title={Bayes EMbedding (BEM) Refining Representation by Integrating Knowledge Graphs and Behavior-specific Networks},
   author={Ye, Yuting and Wang, Xuwu and Yao, Jiangchao and Jia, Kunyang and Zhou, Jingren and Xiao, Yanghua and Yang, Hongxia},
@@ -33,5 +31,5 @@ If you encounter any bugs or have any specific feature requests, please [file an
   pages={679--688},
   year={2019}
 }
-``
+---
 
