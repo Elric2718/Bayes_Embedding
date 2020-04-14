@@ -24,12 +24,12 @@ If you encounter any bugs or have any specific feature requests, please [file an
 
 # Citation
 ---
-@inproceedings{ye2019bayes,
-  title={Bayes EMbedding (BEM) Refining Representation by Integrating Knowledge Graphs and Behavior-specific Networks},
-  author={Ye, Yuting and Wang, Xuwu and Yao, Jiangchao and Jia, Kunyang and Zhou, Jingren and Xiao, Yanghua and Yang, Hongxia},
-  booktitle={Proceedings of the 28th ACM International Conference on Information and Knowledge Management},
-  pages={679--688},
-  year={2019}
-}
+	@inproceedings{ye2019bayes,
+	  title={Bayes EMbedding (BEM) Refining Representation by Integrating Knowledge Graphs and Behavior-specific Networks},
+	  author={Ye, Yuting and Wang, Xuwu and Yao, Jiangchao and Jia, Kunyang and Zhou, Jingren and Xiao, Yanghua and Yang, Hongxia},
+	  booktitle={Proceedings of the 28th ACM International Conference on Information and Knowledge Management},
+	  pages={679--688},
+ 	  year={2019}
+	}
 ---
 
