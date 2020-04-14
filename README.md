@@ -1,4 +1,4 @@
-This project targets at using Bayesian method agglomerate multiple embeddings from different sources.
+This project targets at using Bayesian method agglomerate multiple embeddings from different sources. The paper can be found in https://arxiv.org/abs/1908.10611 
 
 # Prerequisites:
 1. Tensorflow 1.10 or above
